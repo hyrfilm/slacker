@@ -6,5 +6,5 @@ defmodule Str do
     [head, Enum.join(tail, sep)]
   end
 
-  def pop_left(str), do: left_pop(str, @separator)
+  def pop_left(str), do: pop_left(str, @separator)
 end
