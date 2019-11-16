@@ -1,4 +1,4 @@
-defmodule Format do
+defmodule Str do
   @separator " "
 
   def pop_left(str, sep) do
