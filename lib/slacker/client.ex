@@ -13,31 +13,30 @@ defmodule Client do
     {:ok, %{state | socket: socket}}
   end
 
-#  def handle_info({:tcp, socket, data}, state) do
-#    Logger.info "Received #{data}"
-#    Logger.info "Sending it back"
-#
-#    :ok = :gen_tcp.send(socket, data)
-#
-#    Process.sleep(3000)
-#
-#    :ok = :gen_tcp.send(socket, "Zup?")
-#
-#    {:noreply, state}
-#  end
-
   def handle_cast({:msg, msg}, state) do
-    IO.puts "#{msg}"
-    %{socket: socket} = state
-    :gen_tcp.send(socket, msg)
+    #:gen_tcp.send(socket, msg)
     {:noreply, state}
   end
 
   def handle_info({:tcp, _socket, data}, state) do
-    [p_id, msg] = String.split(data, ",")
-    GenServer.cast(IEx.Helpers.pid(p_id), {:msg, msg})
+    [command, args] = data |> String.trim("\r\n") |> Str.pop_left
+    _response = handle_command(command, args)
     {:noreply, state}
   end
   def handle_info({:tcp_closed, _}, state), do: {:stop, :normal, state}
   def handle_info({:tcp_error, _}, state), do: {:stop, :normal, state}
+
+  def handle_command(command, args) do
+    case command do
+      "NICK" -> change_nick(args)
+      _ -> "?"
+    end
+  end
+
+  def change_nick(args) do
+    [nick, ""] = Str.pop_left(args)
+    UserService.login(self(), nick)
+    {:ok}
+  end
+
 end

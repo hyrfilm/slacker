@@ -7,4 +7,5 @@ defmodule Str do
   end
 
   def pop_left(str), do: pop_left(str, @separator)
+
 end
