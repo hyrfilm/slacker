@@ -17,13 +17,13 @@ defmodule Client do
     # find the source nick
     {:ok, src_nick} = UserService.find_nick(src_pid)
     %{socket: socket} = state
-    :ok = :gen_tcp.send(socket, ":#{src_nick} PRIVMSG #{dst} :#{text}\r\n")
+    :ok = :gen_tcp.send(socket, Parse.format(":#{src_nick} PRIVMSG #{dst} :#{text}"))
     Logger.info("Delivered message #{src_nick} -> #{dst}")
     {:noreply, state}
   end
 
   def handle_info({:tcp, socket, data}, state) do
-    [command, args] = data |> String.trim("\r\n") |> Str.pop_left
+    [command, args] = Line.parse(data)
     _response = handle_command(socket, command, args)
     {:noreply, state}
   end
@@ -41,8 +41,8 @@ defmodule Client do
   def nick(socket, args) do
     [nick, ""] = Str.pop_left(args)
     UserService.login(self(), nick)
-    :gen_tcp.send(socket, ":slacker 001 #{nick} :Welcome to slacker v0.01 #{nick}\r\n")
-    :gen_tcp.send(socket, ":slacker 376 #{nick} :End of MOTD command.\r\n")
+    :gen_tcp.send(socket, Parse.format(":slacker 001 #{nick} :Welcome to slacker v0.01 #{nick}"))
+    :gen_tcp.send(socket, Parse.format(":slacker 376 #{nick} :End of MOTD command."))
     {:ok}
   end
 
