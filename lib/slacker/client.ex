@@ -13,8 +13,11 @@ defmodule Client do
     {:ok, %{state | socket: socket}}
   end
 
-  def handle_cast({:msg, msg}, state) do
-    #:gen_tcp.send(socket, msg)
+  def handle_cast({:priv_msg, {src_pid, dst, text}}, state) do
+    # find the source nick
+    {:ok, src_nick} = UserService.find_nick(src_pid)
+    %{socket: socket} = state
+    :ok = :gen_tcp.send(socket, ":#{src_nick} PRIVMSG :#{dst} :#{text}")
     {:noreply, state}
   end
 
@@ -28,15 +31,25 @@ defmodule Client do
 
   def handle_command(command, args) do
     case command do
-      "NICK" -> change_nick(args)
+      "NICK" -> nick(args)
+      "PRIVMSG" -> priv_msg(args)
       _ -> "?"
     end
   end
 
-  def change_nick(args) do
+  def nick(args) do
     [nick, ""] = Str.pop_left(args)
     UserService.login(self(), nick)
     {:ok}
+  end
+
+  def priv_msg(args) do
+    # unpack destination & text
+    [dst_nick, text] = Str.pop_left(args)
+    # find the destination pid
+    {:ok, dst_pid} = UserService.find_pid(dst_nick)
+    # send the text to that pid & add the source pid
+    GenServer.cast(dst_pid, {:priv_msg, {self(), dst_nick, text}})
   end
 
 end

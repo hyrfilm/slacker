@@ -18,6 +18,14 @@ defmodule UserService do
     GenServer.call(UserService, {:logout, {pid, nick}})
   end
 
+  def find_pid(nick) do
+    GenServer.call(UserService, {:find_pid, nick})
+  end
+
+  def find_nick(pid) do
+    GenServer.call(UserService, {:find_nick, pid})
+  end
+
   # Server (callbacks)
 
   @impl true
@@ -46,6 +54,18 @@ defmodule UserService do
     {_, state} = pop_in(state, [:pids, nick])
     IO.puts ("#{inspect(state)}")
     {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:find_pid, nick}, _from, state) do
+    pid = get_in(state, [:pids, nick])
+    {:reply, {:ok, pid}, state}
+  end
+
+  @impl true
+  def handle_call({:find_nick, pid}, _from, state) do
+    nick = get_in(state, [:nicks, pid])
+    {:reply, {:ok, nick}, state}
   end
 
   defp update_state(state, pid, nick) do
