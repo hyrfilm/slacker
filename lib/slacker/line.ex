@@ -6,6 +6,6 @@ defmodule Line do
   end
 
   def format(data) do
-    data ++ @eol
+    "#{data}#{@eol}"
   end
 end

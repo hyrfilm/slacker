@@ -22,4 +22,16 @@ defmodule ChanService do
     channels = %{}
     {:ok, channels}
   end
+
+  @impl true
+  def handle_call({:join, user_pid}, _from, state) do
+    cond do
+      # channel exists, return its pid
+      channel_exists(state, pid)
+        -> {:ok, pid}
+
+      #
+      true
+        -> error(state, :nick_taken)
+  end
 end
