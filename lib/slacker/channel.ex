@@ -11,8 +11,17 @@ defmodule Channel do
     {:ok, state}
   end
 
+  def join(a, b, c) when a==nil or b==nil or c==nil do
+    {:error, :invalid_params}
+  end
+
   def join(channel_pid, user_nick, user_pid) do
     GenServer.call(channel_pid, {:join, user_nick, user_pid})
+  end
+
+  def get_members(nil) do {:error, :not_found} end
+  def get_members(channel_pid) do
+    GenServer.call(channel_pid, {:get_members})
   end
 
   @impl true
@@ -27,5 +36,10 @@ defmodule Channel do
 
     state = put_in(state, key, pid)
     {:reply, response, state}
+  end
+
+  @impl true
+  def handle_call({:get_members}, _from, state) do
+    {:reply, state[:members], state}
   end
 end

@@ -16,6 +16,18 @@ defmodule ChanService do
     end
   end
 
+  def lookup(channel) when is_binary(channel) do find_by_name(channel) end
+
+  defp find_by_name(channel) do
+    result = case Registry.lookup(ChanService, channel) do
+      # found the channel, return its pid
+      [{pid, _} | []] -> pid
+      # channel doesn't exist
+      _ -> nil
+    end
+    result
+  end
+
   defp create_channel(chan_name) do
     pid_name = {:via, Registry, {ChanService, chan_name}}
     Channel.start(pid_name, chan_name)
@@ -23,7 +35,7 @@ defmodule ChanService do
 
   defp join_channel(pid) do
     # what's my name again?
-    nick = NickService.find_by_pid(self())
+    nick = NickService.lookup(self())
     {:ok, status} = Channel.join(pid, nick, self())
     {:ok, status, pid}
   end

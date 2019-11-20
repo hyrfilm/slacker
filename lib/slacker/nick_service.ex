@@ -21,12 +21,20 @@ defmodule NickService do
     {:ok, old_keys}
   end
 
-  def find_by_nick(nick) do
-    [{pid, _} | []] = Registry.lookup(NickService, nick)
-    pid
+  def lookup(nick) when is_binary(nick) do find_by_nick(nick) end
+  def lookup(pid) when is_pid(pid) do find_by_pid(pid) end
+
+  defp find_by_nick(nick) do
+    result = case Registry.lookup(NickService, nick) do
+      # nick is registered, return their pid
+      [{pid, _} | []] -> pid
+      # nick isn't registered
+      _ -> nil
+    end
+    result
   end
 
-  def find_by_pid(pid) do
+  defp find_by_pid(pid) do
     case Registry.keys(NickService, pid) do
     [] -> nil
     [nick] -> nick
