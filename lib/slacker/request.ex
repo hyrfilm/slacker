@@ -46,7 +46,7 @@ defmodule Request do
 
   defp nick(args) do
     [nick, ""] = Str.pop_left(args)
-    UserService.login(self(), nick)
+    NickService.register(nick)
     {:ok, [reply([@msg_welcome, nick]), reply([@msg_motd, nick])]}
   end
 
@@ -54,7 +54,7 @@ defmodule Request do
     # unpack destination & text
     [dst_nick, text] = Str.pop_left(args)
     # find the destination pid
-    {:ok, dst_pid} = UserService.find_pid(dst_nick)
+    dst_pid = NickService.lookup(dst_nick)
     # send the text to that pid & add the source pid
     GenServer.cast(dst_pid, {:priv_msg, {self(), dst_nick, text}})
     {:ok, []}
@@ -63,8 +63,14 @@ defmodule Request do
   defp join(args) do
     # unpack channel name
     [channel, _] = Str.pop_left(args)
-    # try to join it
-    ChanService.join(channel)
+    # join it
+    response = case ChanService.join(channel) do
+      {:ok, :joined, _chan_pid}
+        -> {:ok, ["TODO TOPIC TODO :TODO"]}
+      {:ok, :already_joined, _chan_pid}
+        -> {[]}
+    end
+    response
   end
 
   defp noop(args) do
@@ -74,7 +80,7 @@ defmodule Request do
 
   defp on_priv_msg({src_pid, dst, text}) do
     # find the source nick
-    {:ok, src_nick} = UserService.find_nick(src_pid)
+    src_nick = NickService.lookup(src_pid)
     {:ok, [Line.format(":#{src_nick} PRIVMSG #{dst} :#{text}")]}
   end
 end
