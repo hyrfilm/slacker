@@ -6,12 +6,12 @@ defmodule ChanService do
   def join(channel) do
     case create_channel(channel) do
       {:ok, pid}
-        -> {:ok, pid}
-
-      {:err, pid}
         -> join_channel(pid)
 
-      true
+      {:error, {:already_started, pid}}
+        -> join_channel(pid)
+
+      _
         -> {:err, nil}
     end
   end
@@ -24,6 +24,7 @@ defmodule ChanService do
   defp join_channel(pid) do
     # what's my name again?
     nick = NickService.find_by_pid(self())
-    Channel.join(pid, nick, self())
+    {:ok, status} = Channel.join(pid, nick, self())
+    {:ok, status, pid}
   end
 end

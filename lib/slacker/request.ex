@@ -63,10 +63,8 @@ defmodule Request do
   defp join(args) do
     # unpack channel name
     [channel, _] = Str.pop_left(args)
-    # retrieve its pid
-    {:ok, chan_pid} = ChanService.find_or_create(channel)
     # try to join it
-    ChanService.handle_cast(chan_pid, {:join, self()})
+    ChanService.join(channel)
   end
 
   defp noop(args) do

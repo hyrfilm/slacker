@@ -22,20 +22,16 @@ defmodule NickService do
   end
 
   def find_by_nick(nick) do
-    Registry.lookup(NickService, nick)
+    [{pid, _} | []] = Registry.lookup(NickService, nick)
+    pid
   end
 
   def find_by_pid(pid) do
     case Registry.keys(NickService, pid) do
-    []
-      -> nil
-
-    [pid, _]
-      -> pid
-
-    true
+    [] -> nil
+    [nick] -> nick
     #TODO: shouldn't happend, means a user has many nick names
-      -> nil
+    _ -> nil
     end
   end
 

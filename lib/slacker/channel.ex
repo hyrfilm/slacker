@@ -16,8 +16,16 @@ defmodule Channel do
   end
 
   @impl true
-  def handle_call({:join, nick, pid}, _from, state) do
-    state = put_in(state, [:members, nick], pid)
-    {:reply, :ok, state}
+  def handle_call({:join, nick, pid}, _from, state) when nick !==nil do
+    key = [:members, nick]
+    response = case get_in(state, key) do
+    nil ->
+      {:ok, :joined}
+    _ ->
+      {:ok, :already_joined}
+    end
+
+    state = put_in(state, key, pid)
+    {:reply, response, state}
   end
 end
