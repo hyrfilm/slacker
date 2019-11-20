@@ -18,6 +18,14 @@ defmodule ChanService do
 
   def lookup(channel) when is_binary(channel) do find_by_name(channel) end
 
+  def member?(channel, nick) do
+    chan_pid = lookup(channel)
+    case chan_pid do
+      nil -> false
+      _ -> Channel.member?(chan_pid, nick)
+    end
+  end
+
   defp find_by_name(channel) do
     result = case Registry.lookup(ChanService, channel) do
       # found the channel, return its pid

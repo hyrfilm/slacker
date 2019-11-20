@@ -23,10 +23,16 @@ defmodule Client do
 
   def handle_info({:tcp, socket, data}, state) do
     # handle a *command* initiated by the user
-    {:ok, responses} = Request.handle_command(data)
-    # send back each response
-    Enum.each(responses, socket_send(socket))
-    {:noreply, state}
+    result = case Request.handle_command(data) do
+      {:ok, responses} ->
+        # send back each response...
+        Enum.each(responses, socket_send(socket))
+        {:noreply, state}
+      {:stop} ->
+        # ... unless the user wants to quit
+        {:stop, :normal, state}
+    end
+    result
   end
   def handle_info({:tcp_closed, _}, state), do: {:stop, :normal, state}
   def handle_info({:tcp_error, _}, state), do: {:stop, :normal, state}

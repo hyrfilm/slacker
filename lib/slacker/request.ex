@@ -4,6 +4,7 @@ defmodule Request do
   @name         "slacker"
   @version      "0.01"
 
+  @cmd_quit     "QUIT"
   @cmd_nick     "NICK"
   @cmd_privmsg  "PRIVMSG"
   @cmd_join     "JOIN"
@@ -24,6 +25,9 @@ defmodule Request do
     [command, args] = Line.parse(data)
 
     case command do
+    @cmd_quit
+      -> quit()
+
     @cmd_nick
       -> nick(args)
 
@@ -44,6 +48,10 @@ defmodule Request do
     Line.format(reply)
   end
 
+  defp quit() do
+    {:stop}
+  end
+
   defp nick(args) do
     [nick, ""] = Str.pop_left(args)
     NickService.register(nick)
@@ -52,12 +60,18 @@ defmodule Request do
 
   defp priv_msg(args) do
     # unpack destination & text
-    [dst_nick, text] = Str.pop_left(args)
+    [name, text] = Str.pop_left(args)
     # find the destination pid
-    dst_pid = NickService.lookup(dst_nick)
+    dst_pid = find_destination(name)
     # send the text to that pid & add the source pid
-    GenServer.cast(dst_pid, {:priv_msg, {self(), dst_nick, text}})
+    GenServer.cast(dst_pid, {:priv_msg, {self(), name, text}})
     {:ok, []}
+  end
+
+  defp on_priv_msg({src_pid, dst, text}) do
+    # find the source nick
+    src_nick = NickService.lookup(src_pid)
+    {:ok, Line.format([Line.format(":#{src_nick} PRIVMSG #{dst} :#{text}")])}
   end
 
   defp join(args) do
@@ -78,9 +92,12 @@ defmodule Request do
     {:ok, []}
   end
 
-  defp on_priv_msg({src_pid, dst, text}) do
-    # find the source nick
-    src_nick = NickService.lookup(src_pid)
-    {:ok, [Line.format(":#{src_nick} PRIVMSG #{dst} :#{text}")]}
+  defp find_destination(name) do
+    cond do
+      ChanService.member?(name, NickService.lookup(name))
+        -> ChanService.lookup(name)
+      NickService.exists?(name)
+        -> NickService.lookup(name)
+    end
   end
 end

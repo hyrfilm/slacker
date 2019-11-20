@@ -24,6 +24,13 @@ defmodule NickService do
   def lookup(nick) when is_binary(nick) do find_by_nick(nick) end
   def lookup(pid) when is_pid(pid) do find_by_pid(pid) end
 
+  def exists?(nick) when is_binary(nick) do
+    find_by_nick(nick) != nil
+  end
+  def exists?(pid) when is_pid(pid) do
+    find_by_pid(pid) != nil
+  end
+
   defp find_by_nick(nick) do
     result = case Registry.lookup(NickService, nick) do
       # nick is registered, return their pid
