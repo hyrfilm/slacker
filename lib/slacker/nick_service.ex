@@ -1,5 +1,8 @@
 defmodule NickService do
+  require Logger
+
   def start() do
+    Logger.info "[#{__MODULE__}]: started."
     {:ok, _} = Registry.start_link(keys: :duplicate, name: NickService)
   end
 

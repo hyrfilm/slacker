@@ -2,7 +2,7 @@ defmodule Acceptor do
   require Logger
 
   def start(port) do
-    Logger.info "#{__MODULE__}: started."
+    Logger.info "[#{__MODULE__}]: started."
     {:ok, socket} = :gen_tcp.listen(port, [:binary, packet: :line, active: false, reuseaddr: true])
     Logger.info "Accepting connections on port #{port}"
     loop_acceptor(socket)
