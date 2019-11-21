@@ -19,6 +19,10 @@ defmodule Channel do
     GenServer.call(channel_pid, {:join, user_nick, user_pid})
   end
 
+  def leave(channel_pid, user_nick, user_pid) do
+    GenServer.call(channel_pid, {:leave, user_nick, user_pid})
+  end
+
   def get_members(nil) do {:error, :not_found} end
   def get_members(channel_pid) do
     GenServer.call(channel_pid, {:get_members})
@@ -34,7 +38,6 @@ defmodule Channel do
 
   @impl true
   def handle_call({:join, nick, pid}, _from, state) when nick !==nil do
-    key = [:members, nick]
     response = case is_member?(state, nick) do
       false ->
         {:ok, :joined}
@@ -42,8 +45,20 @@ defmodule Channel do
         {:ok, :already_joined}
     end
 
-    state = put_in(state, key, pid)
+    state = put_in(state, [:members, nick], pid)
     {:reply, response, state}
+  end
+
+  @impl true
+  def handle_call({:leave, nick, _pid}, _from, state) when nick !==nil do
+    response = case is_member?(state, nick) do
+      false ->
+        {:reply, {:error, :not_joined}, state}
+      true ->
+        {_key, state} = pop_in(state, [:members, nick])
+        {:reply, {:ok, :left}, state}
+    end
+    response
   end
 
   @impl true

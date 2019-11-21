@@ -16,6 +16,8 @@ defmodule ChanService do
     end
   end
 
+  def leave(chanel) do leave_channel(lookup(chanel)) end
+
   def lookup(channel) when is_binary(channel) do find_by_name(channel) end
 
   def member?(channel) do member?(channel, NickService.lookup(self())) end
@@ -43,9 +45,13 @@ defmodule ChanService do
   end
 
   defp join_channel(pid) do
-    # what's my name again?
-    nick = NickService.lookup(self())
-    {:ok, status} = Channel.join(pid, nick, self())
+    {:ok, status} = Channel.join(pid, self_nick(), self())
     {:ok, status, pid}
   end
+
+  defp leave_channel(pid) do
+    Channel.leave(pid, self_nick(), self())
+  end
+
+  defp self_nick() do NickService.lookup(self()) end
 end
