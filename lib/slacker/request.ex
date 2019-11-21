@@ -42,7 +42,7 @@ defmodule Request do
     end
   end
 
-  defp reply([msg, nick]) do
+  defp reply(msg, nick) do
     {msg_id, msg_str} = msg
     reply = ":#{@name} #{msg_id} #{msg_str} #{nick}"
     Line.format(reply)
@@ -55,7 +55,7 @@ defmodule Request do
   defp nick(args) do
     [nick, ""] = Str.pop_left(args)
     NickService.register(nick)
-    {:ok, [reply([@msg_welcome, nick]), reply([@msg_motd, nick])]}
+    {:ok, [reply(@msg_welcome, nick), reply(@msg_motd, nick)]}
   end
 
   defp priv_msg(args) do
@@ -71,7 +71,7 @@ defmodule Request do
   defp on_priv_msg({src_pid, dst, text}) do
     # find the source nick
     src_nick = NickService.lookup(src_pid)
-    {:ok, Line.format([Line.format(":#{src_nick} PRIVMSG #{dst} :#{text}")])}
+    {:ok, [Line.format(Line.format(":#{src_nick} PRIVMSG #{dst} :#{text}"))]}
   end
 
   defp join(args) do
@@ -94,7 +94,7 @@ defmodule Request do
 
   defp find_destination(name) do
     cond do
-      ChanService.member?(name, NickService.lookup(name))
+      ChanService.member?(name)
         -> ChanService.lookup(name)
       NickService.exists?(name)
         -> NickService.lookup(name)

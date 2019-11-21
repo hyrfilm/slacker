@@ -66,6 +66,13 @@ defmodule Channel do
     {:reply, state[:members], state}
   end
 
+  @impl true
+  def handle_cast({:priv_msg, {src_pid, _channel, msg}}, state) do
+    channel = state[:name]
+    state[:members] |> Map.values |> broadcast_msg(src_pid, channel, msg)
+    {:noreply, state}
+  end
+
   defp is_member?(state, nick) do
     key = [:members, nick]
     result = case get_in(state, key) do
@@ -73,5 +80,13 @@ defmodule Channel do
       _ -> true
     end
     result
+  end
+
+  defp broadcast_msg(pids, src_pid, channel, msg) do
+    Enum.each(pids, send_priv_msg(src_pid, channel, msg))
+  end
+
+  defp send_priv_msg(src_pid, channel, msg) do
+    &(GenServer.cast(&1, {:priv_msg, {src_pid, channel, msg}}))
   end
 end
