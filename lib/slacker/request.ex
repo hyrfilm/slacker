@@ -38,7 +38,6 @@ defmodule Request do
 
     @cmd_join
       -> join(args)
-
     _
       -> noop(args)
     end
@@ -104,7 +103,7 @@ defmodule Request do
     # join it
     response = case ChanService.join(channel) do
       {:ok, :joined, _chan_pid}
-        -> {:ok, ["TODO TOPIC TODO :TODO"]}
+        -> {:ok, ["TODO TOPIC TODO :TODO\r\n"]}
       {:ok, :already_joined, _chan_pid}
         -> {[]}
     end
