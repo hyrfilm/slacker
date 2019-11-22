@@ -1,16 +1,18 @@
 defmodule Request do
   require Logger
 
-  @name         "slacker"
-  @version      "0.01"
+  @name             "slacker"
+  @version          "0.01"
 
-  @cmd_quit     "QUIT"
-  @cmd_nick     "NICK"
-  @cmd_privmsg  "PRIVMSG"
-  @cmd_join     "JOIN"
+  @cmd_quit         "QUIT"
+  @cmd_nick         "NICK"
+  @cmd_privmsg      "PRIVMSG"
+  @cmd_join         "JOIN"
 
-  @msg_welcome  {"001", ":Welcome to #{@name} v#{@version}"}
-  @msg_motd     {"376", ":End of MOTD command."}
+  @msg_welcome      "001"
+  @msg_motd         "376"
+  @no_such_target   "401"
+  @msg_nick_taken   "433"
 
   def handle_event(type, data) do
     case type do
@@ -42,10 +44,12 @@ defmodule Request do
     end
   end
 
-  defp reply(msg, nick) do
-    {msg_id, msg_str} = msg
-    reply = ":#{@name} #{msg_id} #{msg_str} #{nick}"
-    Line.format(reply)
+  defp reply(msg_id, msg_str) do
+    Line.format(":#{@name} #{msg_id} :#{msg_str}")
+  end
+
+  defp say(src_nick, command, dst, text) do
+    Line.format(":#{src_nick} #{command} #{dst} :#{text}")
   end
 
   defp quit() do
@@ -53,25 +57,45 @@ defmodule Request do
   end
 
   defp nick(args) do
-    [nick, ""] = Str.pop_left(args)
-    NickService.register(nick)
-    {:ok, [reply(@msg_welcome, nick), reply(@msg_motd, nick)]}
+    [nick, _] = Str.pop_left(args)
+    case NickService.register(nick) do
+      {:ok, _} ->
+        welcome_reply(nick)
+      {:error, _} ->
+        nick_taken_reply(nick)
+    end
+  end
+
+  defp welcome_reply(nick) do
+    {:ok,
+      [reply(@msg_welcome, "Welcome to #{@name} v#{@version} #{nick}"),
+      reply(@msg_motd, "End of MOTD command.")]}
+  end
+
+  defp nick_taken_reply(nick) do
+    {:ok, [reply(@msg_nick_taken, "Nickname #{nick} is already in use")]}
   end
 
   defp priv_msg(args) do
     # unpack destination & text
     [name, text] = Str.pop_left(args)
     # find the destination pid
-    dst_pid = find_destination(name)
-    # send the text to that pid & add the source pid
-    GenServer.cast(dst_pid, {:priv_msg, {self(), name, text}})
-    {:ok, []}
+    result = case find_destination(name) do
+      {:ok, pid} ->
+        # send the text to that pid & add the source pid
+        GenServer.cast(pid, {:priv_msg, {self(), name, text}})
+        {:ok, []}
+
+      {:error, _} ->
+        {:ok, [say(@name, @no_such_target, name, "No such nick/channel")]}
+    end
+    result
   end
 
   defp on_priv_msg({src_pid, dst, text}) do
     # find the source nick
     src_nick = NickService.lookup(src_pid)
-    {:ok, [Line.format(Line.format(":#{src_nick} PRIVMSG #{dst} :#{text}"))]}
+    {:ok, [say(src_nick, @cmd_privmsg, dst, text)]}
   end
 
   defp join(args) do
@@ -95,9 +119,11 @@ defmodule Request do
   defp find_destination(name) do
     cond do
       ChanService.member?(name)
-        -> ChanService.lookup(name)
+        -> {:ok, ChanService.lookup(name)}
       NickService.exists?(name)
-        -> NickService.lookup(name)
+        -> {:ok, NickService.lookup(name)}
+      true
+        -> {:error, :not_found}
     end
   end
 end

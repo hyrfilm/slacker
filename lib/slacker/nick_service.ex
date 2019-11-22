@@ -3,7 +3,7 @@ defmodule NickService do
 
   def start() do
     Logger.info "[#{__MODULE__}]: started."
-    {:ok, _} = Registry.start_link(keys: :duplicate, name: NickService)
+    {:ok, _} = Registry.start_link(keys: :unique, name: NickService)
   end
 
   def register(nick) do
@@ -12,16 +12,26 @@ defmodule NickService do
     # and then failing to register the new one (because someone took it, for example) would end up with the
     # pid having no nick associated with it. Therefore the new nick is registered first, then
     # the old nick is unregistered. This means that there might be a short moment while the pid
-    # is associated with both nicks... but that doesn't seem to be a big deal.
+    # is associated with both nicks but... yeah. :)
 
     # first retrieve the already existing keys for this pid
     old_keys = Registry.keys(NickService, self())
     # register the pid under the new name
-    Registry.register(NickService, nick, nil)
-    # now it should be safe to unregister the old keys
-    Enum.each(old_keys, unregister())
-    # done
-    {:ok, old_keys}
+    result = case Registry.register(NickService, nick, nil) do
+      # now it should be safe to unregister the old nick(s)
+      {:ok, _} ->
+        unregister(old_keys)
+
+      # nick has been taken
+      {:error, {:already_registered, _}} ->
+        {:error, :nick_taken}
+
+      # something else went wrong
+      {:error} ->
+        {:error, :unknown_error}
+    end
+
+    result
   end
 
   def lookup(nick) when is_binary(nick) do find_by_nick(nick) end
@@ -51,6 +61,11 @@ defmodule NickService do
     #TODO: shouldn't happend, means a user has many nick names
     _ -> nil
     end
+  end
+
+  defp unregister(nicks) do
+    Enum.each(nicks, unregister())
+    {:ok, nicks}
   end
 
   defp unregister() do
