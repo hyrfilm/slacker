@@ -1,85 +1,68 @@
 defmodule Channel do
   use GenServer
 
-  def start(pid_name, chan_name) do
-    GenServer.start_link(Channel, chan_name, name: pid_name)
+  def start(process_name, chan_name) do
+    GenServer.start_link(Channel, chan_name, name: process_name)
   end
 
   @impl true
   def init(chan_name) do
-    state = %{:name => chan_name, :members => %{}}
+    state = %{:name => chan_name, :members => MapSet.new}
     {:ok, state}
   end
 
-  def join(a, b, c) when a==nil or b==nil or c==nil do
-    {:error, :invalid_params}
-  end
-
-  def join(channel_pid, user_nick, user_pid) do
-    GenServer.call(channel_pid, {:join, user_nick, user_pid})
-  end
-
-  def leave(channel_pid, user_nick, user_pid) do
-    GenServer.call(channel_pid, {:leave, user_nick, user_pid})
-  end
-
-  def get_members(nil) do {:error, :not_found} end
-  def get_members(channel_pid) do
-    GenServer.call(channel_pid, {:get_members})
-  end
-
-  def member?(channel_pid, nick) do
-    GenServer.call(channel_pid, {:is_member, nick})
-  end
-
-  def handle_call({:is_member, nick}, _from, state) do
-    {:reply, is_member?(state, nick), state}
+  def handle_call({:is_member, user_pid}, _from, state) do
+    {:reply, is_member?(state, user_pid), state}
   end
 
   @impl true
-  def handle_call({:join, nick, pid}, _from, state) when nick !==nil do
-    response = case is_member?(state, nick) do
-      false ->
-        {:ok, :joined}
-      true ->
-        {:ok, :already_joined}
-    end
-
-    state = put_in(state, [:members, nick], pid)
-    {:reply, response, state}
+  def handle_call({:join, pid}, _from, state) do
+    join(state, pid)
   end
 
   @impl true
-  def handle_call({:leave, nick, _pid}, _from, state) when nick !==nil do
-    response = case is_member?(state, nick) do
-      false ->
-        {:reply, {:error, :not_joined}, state}
-      true ->
-        {_key, state} = pop_in(state, [:members, nick])
-        {:reply, {:ok, :left}, state}
-    end
-    response
+  def handle_call({:leave, pid}, _from, state) do
+    leave(state, pid)
   end
 
   @impl true
   def handle_call({:get_members}, _from, state) do
-    {:reply, state[:members], state}
+    {:reply, get_members(state), state}
   end
 
   @impl true
-  def handle_cast({:priv_msg, {src_pid, _channel, msg}}, state) do
-    channel = state[:name]
-    state[:members] |> Map.values |> broadcast_msg(src_pid, channel, msg)
+  def handle_cast({:priv_msg, {src_pid, msg}}, state) do
+    get_members(state) |> broadcast_msg(src_pid, self(), msg)
     {:noreply, state}
   end
 
-  defp is_member?(state, nick) do
-    key = [:members, nick]
-    result = case get_in(state, key) do
-      nil -> false
-      _ -> true
+  defp join(state, user_pid) do
+    case is_member?(state, user_pid) do
+      true ->
+        {:reply, :already_joined, state}
+      false ->
+        state = put_member(state, user_pid)
+        IO.puts "#{inspect state}"
+        {:reply, :joined, state}
     end
-    result
+  end
+
+  defp leave(state, user_pid) do
+    case is_member?(state, user_pid) do
+      false ->
+        {:reply, :not_joined, state}
+      true ->
+        state = pop_member(state, user_pid)
+        {:reply, :left, state}
+    end
+  end
+
+  defp is_member?(state, user_pid) do
+    MapSet.member?(state[:members], user_pid)
+  end
+
+  defp get_members(state) do
+    get_in(state, [:members])
   end
 
   defp broadcast_msg(pids, src_pid, channel, msg) do
@@ -88,5 +71,15 @@ defmodule Channel do
 
   defp send_priv_msg(src_pid, channel, msg) do
     &(GenServer.cast(&1, {:priv_msg, {src_pid, channel, msg}}))
+  end
+
+  defp put_member(state, user_pid) do
+    members = MapSet.put(state[:members], user_pid)
+    put_in(state[:members], members)
+  end
+
+  defp pop_member(state, user_pid) do
+    members = MapSet.delete(state[:members], user_pid)
+    put_in(state[:members], members)
   end
 end
