@@ -2,17 +2,25 @@ defmodule ChannelTest do
   use ExUnit.Case
   doctest Channel
 
-  test "joins a channel" do
+  test "joins and leave a channel" do
     # create the channel
     {:ok, channel_pid} = Channel.start(:my_channel, "#my_channel")
-    # join it
-    {:ok, :joined, _} = GenServer.call(channel_pid, {:join, self()})
-    # verify that we're in it
-    assert as_set([self()]) == GenServer.call(channel_pid, {:get_members})
-    # leave it
-    {:ok, :left, _} = GenServer.call(channel_pid, {:leave, self()})
-    # it should now be empty
-    assert as_set([]) == GenServer.call(channel_pid, {:get_members})
+
+    # we're not a member yet
+    assert false == ChannelHelper.is_member?(channel_pid)
+
+    # join the channel
+    assert :joined == ChannelHelper.join(channel_pid)
+
+    # now we're a member
+    assert true == ChannelHelper.is_member?(channel_pid)
+    assert [self()] == ChannelHelper.get_members(channel_pid)
+
+    # leave the channel
+    assert :left == ChannelHelper.leave(channel_pid)
+
+    # channel is empty now
+    assert [] == ChannelHelper.get_members(channel_pid)
 
     Process.exit(channel_pid, :kill)
   end
@@ -20,13 +28,27 @@ defmodule ChannelTest do
   test "joining a channel when already joined" do
     # create the channel
     {:ok, channel_pid} = Channel.start(:my_channel, "#my_channel")
-    # join it
-    {:ok, :joined, _} = GenServer.call(channel_pid, {:join, self()})
-    # join it again, we should get a response that we've joined it already
-    {:ok, :already_joined, _} = GenServer.call(channel_pid, {:join, self()})
+
+    # join the channel
+    assert :joined == ChannelHelper.join(channel_pid)
+
+    # join the channel again
+    assert :already_joined == ChannelHelper.join(channel_pid)
 
     Process.exit(channel_pid, :kill)
   end
+
+
+  test "leaving a channel that haven't been joined" do
+    # create the channel
+    {:ok, channel_pid} = Channel.start(:my_channel, "#my_channel")
+
+    # leave the channel
+    assert :not_joined == ChannelHelper.leave(channel_pid)
+
+    Process.exit(channel_pid, :kill)
+  end
+
 
 #  test "creates a channel & sends some chat messages" do
 #    Enum.each(["jonas", "simon"], spawn fn -> chat_receiver end)

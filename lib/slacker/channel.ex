@@ -11,50 +11,41 @@ defmodule Channel do
     {:ok, state}
   end
 
-  def handle_call({:is_member, user_pid}, _from, state) do
-    {:reply, is_member?(state, user_pid), state}
+  @impl true
+  def handle_call({:join}, {pid, _}, state) do
+    case is_member?(state, pid) do
+      true ->
+        {:reply, {:ok, :already_joined, self()}, state}
+      false ->
+        state = put_member(state, pid)
+        {:reply, {:ok, :joined, self()}, state}
+    end
   end
 
   @impl true
-  def handle_call({:join, pid}, _from, state) do
-    join(state, pid)
+  def handle_call({:leave}, {pid, _}, state) do
+    case is_member?(state, pid) do
+      false ->
+        {:reply, {:ok, :not_joined, self()}, state}
+      true ->
+        state = pop_member(state, pid)
+        {:reply, {:ok, :left, self()}, state}
+    end
   end
 
-  @impl true
-  def handle_call({:leave, pid}, _from, state) do
-    leave(state, pid)
+  def handle_call({:is_member}, {pid, _}, state) do
+    {:reply, {:ok, is_member?(state, pid), self()}, state}
   end
 
   @impl true
   def handle_call({:get_members}, _from, state) do
-    {:reply, get_members(state), state}
+    {:reply, {:ok, get_members(state), self()}, state}
   end
 
   @impl true
   def handle_cast({:priv_msg, {src_pid, msg}}, state) do
     get_members(state) |> broadcast_msg(src_pid, self(), msg)
     {:noreply, state}
-  end
-
-  defp join(state, user_pid) do
-    case is_member?(state, user_pid) do
-      true ->
-        {:reply, :already_joined, state}
-      false ->
-        state = put_member(state, user_pid)
-        IO.puts "#{inspect state}"
-        {:reply, :joined, state}
-    end
-  end
-
-  defp leave(state, user_pid) do
-    case is_member?(state, user_pid) do
-      false ->
-        {:reply, :not_joined, state}
-      true ->
-        state = pop_member(state, user_pid)
-        {:reply, :left, state}
-    end
   end
 
   defp is_member?(state, user_pid) do
