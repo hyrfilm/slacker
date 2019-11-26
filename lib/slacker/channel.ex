@@ -43,9 +43,9 @@ defmodule Channel do
   end
 
   @impl true
-  def handle_cast({:priv_msg, {src_pid, msg}}, state) do
-    get_members(state) |> broadcast_msg(src_pid, self(), msg)
-    {:noreply, state}
+  def handle_call({:priv_msg, src_nick, msg}, {src_pid, _}, state) do
+    get_members(state) |> broadcast_msg(src_pid, src_nick, self(), state[:name], msg)
+    {:reply, {:ok, :sent}, state}
   end
 
   defp is_member?(state, user_pid) do
@@ -56,12 +56,12 @@ defmodule Channel do
     get_in(state, [:members])
   end
 
-  defp broadcast_msg(pids, src_pid, channel, msg) do
-    Enum.each(pids, send_priv_msg(src_pid, channel, msg))
+  defp broadcast_msg(pids, src_pid, src_nick, channel_pid, channel_name, msg) do
+    Enum.each(pids, send_priv_msg(src_pid, src_nick, channel_name, msg))
   end
 
-  defp send_priv_msg(src_pid, channel, msg) do
-    &(GenServer.cast(&1, {:priv_msg, {src_pid, channel, msg}}))
+  defp send_priv_msg(src_pid, src_nick, channel_name, msg) do
+    &(GenServer.cast(&1, {:priv_msg, {src_pid, src_nick, channel_name, msg}}))
   end
 
   defp put_member(state, user_pid) do
