@@ -18,4 +18,28 @@ defmodule Str do
     # combine and flatten them (eg "dude", "PRIVMSG", "#swecan", "legalize it")
     List.flatten([heads | tail])
   end
+
+  def format(list) do
+    # pop first & last
+    {head, list} = List.pop_at(list, 0)
+    {tail, list} = List.pop_at(list, -1)
+
+    # colonize & reassemble
+    list = [col(head)] ++ list ++ [col(tail)]
+
+    # remove eventual nil elements
+    list = Enum.filter(list, &!is_nil(&1))
+
+    # format it & return
+    Enum.join(list, " ")
+  end
+
+  defp col(str) when str==nil do
+    nil
+  end
+
+  defp col(str) do
+    ":#{str}"
+  end
+
 end
