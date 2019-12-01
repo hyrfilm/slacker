@@ -38,6 +38,7 @@ defmodule Request do
 
     @cmd_join
       -> join(args)
+
     _
       -> noop(args)
     end

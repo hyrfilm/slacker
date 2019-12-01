@@ -9,6 +9,10 @@ defmodule FakeUser do
     GenServer.call(user_pid, {:join, channel_pid})
   end
 
+  def nick(user_pid, nick) do
+    GenServer.call(user_pid, {:nick, nick})
+  end
+
   def priv_messages(user_pid) do
     GenServer.call(user_pid, {:priv_messages})
   end
@@ -22,6 +26,12 @@ defmodule FakeUser do
   @impl true
   def handle_call({:join, channel_pid}, _from, state) do
     GenServer.call(channel_pid, {:join})
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:nick, nick}, _from, state) do
+    {:ok, _} = NickService.register(nick)
     {:reply, :ok, state}
   end
 

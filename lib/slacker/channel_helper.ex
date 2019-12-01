@@ -1,4 +1,9 @@
 defmodule ChannelHelper do
+  def is_member(channel_pid) do
+    {:ok, is_member, _} = GenServer.call(channel_pid, {:is_member})
+    {:ok, is_member}
+  end
+
   def is_member?(channel_pid) do
     {:ok, is_member, _} = GenServer.call(channel_pid, {:is_member})
     is_member
@@ -7,19 +12,19 @@ defmodule ChannelHelper do
 
   def join(channel_pid) do
     {:ok, result, _} = GenServer.call(channel_pid, {:join})
-    result
+    {:ok, result}
   end
 
 
   def leave(channel_pid) do
     {:ok, result, _} = GenServer.call(channel_pid, {:leave})
-    result
+    {:ok, result}
   end
 
 
   def get_members(channel_pid) do
     {:ok, result, _} = GenServer.call(channel_pid, {:get_members})
-    MapSet.to_list(result)
+    {:ok, MapSet.to_list(result)}
   end
 
   def priv_msg(channel_pid, nick, msg) do

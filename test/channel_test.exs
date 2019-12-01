@@ -10,17 +10,17 @@ defmodule ChannelTest do
     assert false == ChannelHelper.is_member?(channel_pid)
 
     # join the channel
-    assert :joined == ChannelHelper.join(channel_pid)
+    assert {:ok, :joined} == ChannelHelper.join(channel_pid)
 
     # now we're a member
     assert true == ChannelHelper.is_member?(channel_pid)
-    assert [self()] == ChannelHelper.get_members(channel_pid)
+    assert {:ok, [self()]} == ChannelHelper.get_members(channel_pid)
 
     # leave the channel
-    assert :left == ChannelHelper.leave(channel_pid)
+    assert {:ok, :left} == ChannelHelper.leave(channel_pid)
 
     # channel is empty now
-    assert [] == ChannelHelper.get_members(channel_pid)
+    assert {:ok, []} == ChannelHelper.get_members(channel_pid)
 
     Process.exit(channel_pid, :kill)
   end
@@ -30,10 +30,10 @@ defmodule ChannelTest do
     {:ok, channel_pid} = Channel.start(:my_channel, "#my_channel")
 
     # join the channel
-    assert :joined == ChannelHelper.join(channel_pid)
+    assert {:ok, :joined} == ChannelHelper.join(channel_pid)
 
     # join the channel again
-    assert :already_joined == ChannelHelper.join(channel_pid)
+    assert {:ok, :already_joined} == ChannelHelper.join(channel_pid)
 
     Process.exit(channel_pid, :kill)
   end
@@ -44,7 +44,7 @@ defmodule ChannelTest do
     {:ok, channel_pid} = Channel.start(:my_channel, "#my_channel")
 
     # leave the channel
-    assert :not_joined == ChannelHelper.leave(channel_pid)
+    assert {:ok, :not_joined} == ChannelHelper.leave(channel_pid)
 
     Process.exit(channel_pid, :kill)
   end

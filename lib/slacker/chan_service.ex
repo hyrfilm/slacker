@@ -48,7 +48,7 @@ defmodule ChanService do
   end
 
   defp join_channel(pid) do
-    {:ok, status} = Channel.join(pid, self_nick(), self())
+    {:ok, status} = ChannelHelper.join(pid)
     {:ok, status, pid}
   end
 
