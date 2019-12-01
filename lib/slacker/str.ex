@@ -1,5 +1,6 @@
 defmodule Str do
   @separator " "
+  @eol "\r\n"
 
   def pop_left(str, sep) do
     [ head | tail ] = String.split(str, sep)
@@ -24,14 +25,16 @@ defmodule Str do
     {head, list} = List.pop_at(list, 0)
     {tail, list} = List.pop_at(list, -1)
 
-    # colonize & reassemble
+    # add colons & reassemble
     list = [col(head)] ++ list ++ [col(tail)]
 
     # remove eventual nil elements
-    list = Enum.filter(list, &!is_nil(&1))
+    #list = Enum.filter(list, &!is_nil(&1))
 
-    # format it & return
-    Enum.join(list, " ")
+    list
+    |> Enum.filter(&!is_nil(&1)) # remove eventual nil elements
+    |> Enum.join(" ")            # join list into string
+    |> eol                       # append eol
   end
 
   defp col(str) when str==nil do
@@ -42,4 +45,7 @@ defmodule Str do
     ":#{str}"
   end
 
+  defp eol(str) do
+    "#{str}#{@eol}"
+  end
 end

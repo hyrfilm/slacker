@@ -68,12 +68,15 @@ defmodule Request do
 
   defp welcome_reply(nick) do
     {:ok,
-      [reply(@msg_welcome, "Welcome to #{@name} v#{@version} #{nick}"),
-      reply(@msg_motd, "End of MOTD command.")]}
+      [
+        Str.format([@name, @msg_welcome, "Welcome to #{name_version} #{nick}"]),
+        Str.format([@name, @msg_motd, "End of MOTD command."])
+      ]
+    }
   end
 
   defp nick_taken_reply(nick) do
-    {:ok, [reply(@msg_nick_taken, "Nickname #{nick} is already in use")]}
+    {:ok, [Str.format([@name, @msg_nick_taken, "Nickname #{nick} is already in use"])]}
   end
 
   defp priv_msg(args) do
@@ -125,5 +128,9 @@ defmodule Request do
       true
         -> {:error, :not_found}
     end
+  end
+
+  defp name_version() do
+    "#{@name} v#{@version}"
   end
 end

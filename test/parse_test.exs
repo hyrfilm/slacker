@@ -18,15 +18,15 @@ defmodule ParseTest do
 
   test "formatting" do
     assert Str.format(["Hell", "001", "dude", "Welcome to Hell v1.0, you're here for life."])
-           == ":Hell 001 dude :Welcome to Hell v1.0, you're here for life."
+           == ":Hell 001 dude :Welcome to Hell v1.0, you're here for life.\r\n"
 
     assert Str.format(["dude", "TOPIC", "#swecan", "Legalize it"])
-           == ":dude TOPIC #swecan :Legalize it"
+           == ":dude TOPIC #swecan :Legalize it\r\n"
 
     assert Str.format(["dude", "NICK", "dude93"])
-           == ":dude NICK :dude93"
+           == ":dude NICK :dude93\r\n"
 
     assert Str.format(["dude", "PRIVMSG", "dude93", "zup?"])
-           == ":dude PRIVMSG dude93 :zup?"
+           == ":dude PRIVMSG dude93 :zup?\r\n"
   end
 end
