@@ -23,12 +23,11 @@ defmodule ChanService do
 
   def lookup(channel) when is_binary(channel) do find_by_name(channel) end
 
-  def member?(channel) do member?(channel, NickService.lookup(self())) end
-  def member?(channel, nick) do
+  def member?(channel) do
     chan_pid = lookup(channel)
     case chan_pid do
       nil -> false
-      _ -> Channel.member?(chan_pid, nick)
+      _ -> ChannelHelper.is_member?(chan_pid)
     end
   end
 
@@ -53,8 +52,6 @@ defmodule ChanService do
   end
 
   defp leave_channel(pid) do
-    Channel.leave(pid, self_nick(), self())
+    ChannelHelper.leave(pid)
   end
-
-  defp self_nick() do NickService.lookup(self()) end
 end

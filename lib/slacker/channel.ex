@@ -56,7 +56,7 @@ defmodule Channel do
     get_in(state, [:members])
   end
 
-  defp broadcast_msg(pids, src_pid, src_nick, channel_pid, channel_name, msg) do
+  defp broadcast_msg(pids, src_pid, src_nick, _channel_pid, channel_name, msg) do
     Enum.each(pids, send_priv_msg(src_pid, src_nick, channel_name, msg))
   end
 

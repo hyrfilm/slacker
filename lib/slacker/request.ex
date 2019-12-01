@@ -44,14 +44,6 @@ defmodule Request do
     end
   end
 
-  defp reply(msg_id, msg_str) do
-    Line.format(":#{@name} #{msg_id} :#{msg_str}")
-  end
-
-  defp say(src_nick, command, dst, text) do
-    Line.format(":#{src_nick} #{command} #{dst} :#{text}")
-  end
-
   defp quit() do
     {:stop}
   end
@@ -69,7 +61,7 @@ defmodule Request do
   defp welcome_reply(nick) do
     {:ok,
       [
-        Str.format([@name, @msg_welcome, "Welcome to #{name_version} #{nick}"]),
+        Str.format([@name, @msg_welcome, "Welcome to #{name_version()} #{nick}"]),
         Str.format([@name, @msg_motd, "End of MOTD command."])
       ]
     }
@@ -90,7 +82,7 @@ defmodule Request do
         {:ok, []}
 
       {:error, _} ->
-        {:ok, [say(@name, @no_such_target, name, "No such nick/channel")]}
+        {:ok, [Str.format([@name, @no_such_target, name, "No such nick/channel"])]}
     end
     result
   end
@@ -98,7 +90,7 @@ defmodule Request do
   defp on_priv_msg({src_pid, dst, text}) do
     # find the source nick
     src_nick = NickService.lookup(src_pid)
-    {:ok, [say(src_nick, @cmd_privmsg, dst, text)]}
+    {:ok, [Str.format([src_nick, @cmd_privmsg, dst, text])]}
   end
 
   defp join(args) do
@@ -107,7 +99,7 @@ defmodule Request do
     # join it
     response = case ChanService.join(channel) do
       {:ok, :joined, _chan_pid}
-        -> {:ok, ["TODO TOPIC TODO :TODO\r\n"]}
+        -> {:ok, Str.format(["dude", "TOPIC", channel, "No topic"])}
       {:ok, :already_joined, _chan_pid}
         -> {[]}
     end

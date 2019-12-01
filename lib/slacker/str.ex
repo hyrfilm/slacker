@@ -28,9 +28,6 @@ defmodule Str do
     # add colons & reassemble
     list = [col(head)] ++ list ++ [col(tail)]
 
-    # remove eventual nil elements
-    #list = Enum.filter(list, &!is_nil(&1))
-
     list
     |> Enum.filter(&!is_nil(&1)) # remove eventual nil elements
     |> Enum.join(" ")            # join list into string
