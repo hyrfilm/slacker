@@ -41,9 +41,9 @@ defmodule FakeUser do
   end
 
   @impl true
-  def handle_cast({:priv_msg, msg}, state) do
+  def handle_cast([:priv_msg | payload], state) do
     priv_messages = get_in(state, [:priv_messages])
-    priv_messages = [msg | priv_messages]
+    priv_messages = [payload | priv_messages]
     state = put_in(state, [:priv_messages], priv_messages)
     {:noreply, state}
   end

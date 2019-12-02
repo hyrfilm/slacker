@@ -68,8 +68,8 @@ defmodule ChannelTest do
     ChannelHelper.priv_msg(channel_pid, "st0ner93", "dude!")
 
     # verify that it was received
-    assert FakeUser.priv_messages(pid1) == [{self(), "st0ner93", "#my_channel", "dude!"}]
-    assert FakeUser.priv_messages(pid1) == [{self(), "st0ner93", "#my_channel", "dude!"}]
-    assert FakeUser.priv_messages(pid1) == [{self(), "st0ner93", "#my_channel", "dude!"}]
+    assert FakeUser.priv_messages(pid1) == [[self(), "st0ner93", "#my_channel", "dude!"]]
+    assert FakeUser.priv_messages(pid1) == [[self(), "st0ner93", "#my_channel", "dude!"]]
+    assert FakeUser.priv_messages(pid1) == [[self(), "st0ner93", "#my_channel", "dude!"]]
   end
 end

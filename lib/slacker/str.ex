@@ -10,9 +10,11 @@ defmodule Str do
   def pop_left(str), do: pop_left(str, @separator)
 
   def parse(str) do
-    # eg ":dude PRIVMSG #swecan :legalize it!"
+    # eg ":dude PRIVMSG #swecan :legalize it!\r\n"
 
-    # first split the string into the parts that is prefixed by colons (eg ["dude PRIVMSG #swecan", "legalize it")
+    # remove eol ("\r\n")
+    str = String.replace(str, @eol, "")
+    # split the string into the parts that is prefixed by colons (eg ["dude PRIVMSG #swecan", "legalize it")
     [head | tail] = String.split(str, ":", trim: true)
     # then split the first part of those parts by space [eg "dude", "PRIVMSG", "#swecan"]
     heads = String.split(head, " ", trim: true)

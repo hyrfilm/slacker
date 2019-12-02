@@ -43,9 +43,9 @@ defmodule Channel do
   end
 
   @impl true
-  def handle_call({:priv_msg, src_nick, msg}, {src_pid, _}, state) do
+  def handle_cast([:priv_msg, src_pid, src_nick, _channel, msg], state) do
     get_members(state) |> broadcast_msg(src_pid, src_nick, self(), state[:name], msg)
-    {:reply, {:ok, :sent}, state}
+    {:noreply, state}
   end
 
   defp is_member?(state, user_pid) do
@@ -61,7 +61,7 @@ defmodule Channel do
   end
 
   defp send_priv_msg(src_pid, src_nick, channel_name, msg) do
-    &(GenServer.cast(&1, {:priv_msg, {src_pid, src_nick, channel_name, msg}}))
+    &(GenServer.cast(&1, [:priv_msg, src_pid, src_nick, channel_name, msg]))
   end
 
   defp put_member(state, user_pid) do

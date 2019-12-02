@@ -13,7 +13,7 @@ defmodule Client do
     {:ok, %{state | socket: socket}}
   end
 
-  def handle_cast({type, data}, %{socket: socket} = state) do
+  def handle_cast([type | data], %{socket: socket} = state) do
     # handle an *event* initiated by the server
     {:ok, responses} = Request.handle_event(type, data)
     # send back each response

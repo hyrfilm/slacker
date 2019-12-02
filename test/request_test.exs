@@ -7,6 +7,8 @@ defmodule RequestTest do
 
     pids = [nick_pid, chan_pid]
 
+    #TODO: This is a hack, we don't have a guarantee that all processes have been killed before
+    #TODO: a new test is run, which can make them sporadically fail. FIX!
     on_exit(fn -> kill_all(pids) end)
     :ok
   end
@@ -21,7 +23,9 @@ defmodule RequestTest do
   end
 
   test "request: JOIN" do
-    Request.handle_command("JOIN #swecan")
+    {:ok, responses} = Request.handle_command("JOIN #swecan")
+
+    assert [":dude TOPIC #swecan :No topic\r\n"] == responses
 
     assert true == ChannelHelper.is_member?(ChanService.lookup("#swecan"))
   end
@@ -29,13 +33,14 @@ defmodule RequestTest do
   test "request: PRIVMSG" do
     {:ok, pid} = FakeUser.start("dude")
     FakeUser.nick(pid, "dude")
+    NickService.register("jones")
 
     Request.handle_command("PRIVMSG dude :wazup?")
 
-    assert [{self(), "dude", ":wazup?"}] == FakeUser.priv_messages(pid)
+    assert [[self(), "jones", "dude", "wazup?"]] == FakeUser.priv_messages(pid)
   end
 
   defp kill_all(pids) do
-    pids |> Enum.each(&Process.exit(&1, :kill))
+    Enum.each(pids, &Process.exit(&1, :kill))
   end
 end

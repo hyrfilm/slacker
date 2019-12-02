@@ -24,11 +24,11 @@ defmodule Request do
   end
 
   def handle_command(data) do
-    [command, args] = Line.parse(data)
+    [command | args] = Str.parse(data)
 
     case command do
     @cmd_quit
-      -> quit()
+      -> quit(args)
 
     @cmd_nick
       -> nick(args)
@@ -40,16 +40,15 @@ defmodule Request do
       -> join(args)
 
     _
-      -> noop(args)
+      -> noop(data)
     end
   end
 
-  defp quit() do
+  defp quit([_]) do
     {:stop}
   end
 
-  defp nick(args) do
-    [nick, _] = Str.pop_left(args)
+  defp nick([nick]) do
     case NickService.register(nick) do
       {:ok, _} ->
         welcome_reply(nick)
@@ -71,14 +70,12 @@ defmodule Request do
     {:ok, [Str.format([@name, @msg_nick_taken, "Nickname #{nick} is already in use"])]}
   end
 
-  defp priv_msg(args) do
-    # unpack destination & text
-    [name, text] = Str.pop_left(args)
+  defp priv_msg([name, text]) do
     # find the destination pid
     result = case find_destination(name) do
       {:ok, pid} ->
         # send the text to that pid & add the source pid
-        GenServer.cast(pid, {:priv_msg, {self(), name, text}})
+        GenServer.cast(pid, [:priv_msg, self(), self_nick(), name, text])
         {:ok, []}
 
       {:error, _} ->
@@ -87,19 +84,21 @@ defmodule Request do
     result
   end
 
-  defp on_priv_msg({src_pid, dst, text}) do
-    # find the source nick
-    src_nick = NickService.lookup(src_pid)
-    {:ok, [Str.format([src_nick, @cmd_privmsg, dst, text])]}
+  defp on_priv_msg([src_pid, src_name, dst_name, text]) do
+    case src_pid == self() do
+      false
+        -> {:ok, [Str.format([src_name, @cmd_privmsg, dst_name, text])]}
+      true
+        # ignore messages from yourself
+        -> {:ok, []}
+    end
   end
 
-  defp join(args) do
-    # unpack channel name
-    [channel, _] = Str.pop_left(args)
+  defp join([channel]) do
     # join it
     response = case ChanService.join(channel) do
       {:ok, :joined, _chan_pid}
-        -> {:ok, Str.format(["dude", "TOPIC", channel, "No topic"])}
+        -> {:ok, [Str.format(["dude", "TOPIC", channel, "No topic"])]}
       {:ok, :already_joined, _chan_pid}
         -> {[]}
     end
@@ -125,4 +124,9 @@ defmodule Request do
   defp name_version() do
     "#{@name} v#{@version}"
   end
+
+  defp self_nick() do
+    "#{NickService.lookup(self())}"
+  end
+
 end
