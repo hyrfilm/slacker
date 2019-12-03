@@ -8,6 +8,7 @@ defmodule Slacker.MixProject do
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      aliases: [test: "test --no-start"]
     ]
   end
 
@@ -15,7 +16,7 @@ defmodule Slacker.MixProject do
   def application do
     [
       extra_applications: [:logger],
-    #  mod: {Slacker.Main, []}
+      mod: {Slacker.Main, []}
     ]
   end
 
