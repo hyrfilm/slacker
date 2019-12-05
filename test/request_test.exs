@@ -18,7 +18,7 @@ defmodule RequestTest do
 
     {:ok, responses} = Request.handle_command("NICK dude")
 
-    assert responses == [":slacker 001 :Welcome to slacker v0.01 dude\r\n", ":slacker 376 :End of MOTD command.\r\n"]
+    assert responses == [":slacker 001 dude :Welcome to slacker v0.01\r\n", ":slacker 376 :End of MOTD command.\r\n"]
     assert true == NickService.exists?("dude")
   end
 

@@ -60,7 +60,7 @@ defmodule Request do
   defp welcome_reply(nick) do
     {:ok,
       [
-        Str.format([@name, @msg_welcome, "Welcome to #{name_version()} #{nick}"]),
+        Str.format([@name, @msg_welcome, nick, "Welcome to #{name_version()}"]),
         Str.format([@name, @msg_motd, "End of MOTD command."])
       ]
     }
