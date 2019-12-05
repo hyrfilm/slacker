@@ -12,10 +12,13 @@ defmodule Str do
   def parse(str) do
     # eg ":dude PRIVMSG #swecan :legalize it!\r\n"
 
-    # remove eol ("\r\n")
+    # remove eol ("\r\n") (eg -> ":dude PRIVMSG #swecan :legalize it!")
     str = String.replace(str, @eol, "")
-    # split the string into the parts that is prefixed by colons (eg ["dude PRIVMSG #swecan", "legalize it")
-    [head | tail] = String.split(str, ":", trim: true)
+    # if the message starts with a colon just remove it ("dude PRIVMSG #swecan :legalize it!")
+    str = String.replace(str, "^:", "")
+
+    # split the string where the optional text message starts (eg ["dude PRIVMSG #swecan", "legalize it")
+    [head | tail] = String.split(str, ":", trim: true, parts: 2)
     # then split the first part of those parts by space [eg "dude", "PRIVMSG", "#swecan"]
     heads = String.split(head, " ", trim: true)
     # combine and flatten them (eg "dude", "PRIVMSG", "#swecan", "legalize it")
