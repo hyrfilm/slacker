@@ -14,9 +14,9 @@ JOIN #some-channel
 
 ### supported clients
 Tested with:
-- Irssi
-- LimeChat
-- Colloquy
+- [Irssi](https://irssi.org/)
+- [LimeChat](http://limechat.net/)
+- [Colloquy](http://colloquy.info/)
 
 ### performance
 Should be able to handle a fair amount of connections. All users, sockets & channels are handled concurrently.
