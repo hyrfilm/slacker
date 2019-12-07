@@ -10,7 +10,7 @@ you could now connect to it with a irc-client or just with telnet:
 telnet localhost 6667
 NICK hyrfilm
 JOIN #some-channel
-``
+```
 
 ### supported clients
 Tested with:
