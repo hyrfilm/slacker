@@ -23,7 +23,6 @@ defmodule Client do
 
   def handle_info({:tcp, socket, data}, state) do
     # handle a *command* initiated by the user
-    IO.puts("COMMAND: '#{data}'")
     result = case Request.handle_command(data) do
       {:ok, responses} ->
         # send back each response...

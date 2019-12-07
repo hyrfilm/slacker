@@ -42,6 +42,10 @@ defmodule Channel do
     {:reply, {:ok, get_members(state), self()}, state}
   end
 
+  def handle_call({:get_name}, _from, state) do
+    {:reply, {:ok, state[:name], self()}, state}
+  end
+
   @impl true
   def handle_cast([:priv_msg, src_pid, src_nick, _channel, msg], state) do
     get_members(state) |> broadcast_msg(src_pid, src_nick, self(), state[:name], msg)

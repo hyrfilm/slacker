@@ -9,6 +9,10 @@ defmodule ChannelHelper do
     is_member
   end
 
+  def name(channel_pid) do
+    {:ok, name, _} = GenServer.call(channel_pid, {:get_name})
+    name
+  end
 
   def join(channel_pid) do
     {:ok, result, _} = GenServer.call(channel_pid, {:join})

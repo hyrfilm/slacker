@@ -3,7 +3,10 @@ defmodule ChanService do
 
   def start() do
     Logger.info "[#{__MODULE__}]: started."
-    {:ok, _} = Registry.start_link(keys: :unique, name: ChanService)
+    # keeps track of what channels exists
+    {:ok, _} = Registry.start_link(keys: :unique, name: :AllChannels)
+    # keeps track of which clients are in which channels
+    {:ok, _} = Registry.start_link(keys: :duplicate, name: :AllClients)
   end
 
   def join(channel) do
@@ -31,8 +34,13 @@ defmodule ChanService do
     end
   end
 
+  def client_channels(pid) do
+    # returns all channels the calling pid is registered in
+    Registry.keys(:AllClients, pid)
+  end
+
   defp find_by_name(channel) do
-    result = case Registry.lookup(ChanService, channel) do
+    result = case Registry.lookup(:AllChannels, channel) do
       # found the channel, return its pid
       [{pid, _} | []] -> pid
       # channel doesn't exist
@@ -42,16 +50,29 @@ defmodule ChanService do
   end
 
   defp create_channel(chan_name) do
-    pid_name = {:via, Registry, {ChanService, chan_name}}
+    pid_name = {:via, Registry, {:AllChannels, chan_name}}
     Channel.start(pid_name, chan_name)
   end
 
   defp join_channel(pid) do
     {:ok, status} = ChannelHelper.join(pid)
+    register_client_in_channel(pid)
     {:ok, status, pid}
   end
 
   defp leave_channel(pid) do
-    ChannelHelper.leave(pid)
+    {:ok, status, pid} = ChannelHelper.leave(pid)
+    unregister_client_in_channel(pid)
+    {:ok, status, pid}
+  end
+
+  defp register_client_in_channel(channel_pid) do
+    channel_name = ChannelHelper.name(channel_pid)
+    Registry.register(:AllClients, channel_name, nil)
+  end
+
+  defp unregister_client_in_channel(channel_pid) do
+    channel_name = ChannelHelper.name(channel_pid)
+    Registry.unregister(:AllClients, channel_name)
   end
 end

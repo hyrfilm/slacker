@@ -43,6 +43,10 @@ defmodule Str do
     nil
   end
 
+  defp col(str) when str=="" do
+    nil
+  end
+
   defp col(str) do
     ":#{str}"
   end

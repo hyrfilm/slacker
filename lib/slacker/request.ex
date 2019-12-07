@@ -51,7 +51,15 @@ defmodule Request do
     end
   end
 
-  defp quit(_) do
+  defp quit([]) do
+    quit([""])
+  end
+  defp quit([msg]) do
+    # send out a quit message to all channels the user is a part of and stop the process
+    quit_msg = Str.format([self_nick(), @cmd_quit, msg])
+    channel_names = ChanService.client_channels(self())
+    channel_pids = Enum.map(channel_names, &ChanService.lookup(&1))
+    Enum.each(channel_pids, announce(quit_msg))
     {:stop}
   end
 
@@ -109,7 +117,7 @@ defmodule Request do
     # join it
     response = case ChanService.join(channel) do
       {:ok, :joined, chan_pid} ->
-        channel_msg = Str.format([self_nick(), @cmd_join, channel])
+        channel_msg = Str.format([self_nick(), @cmd_join, channel, ""])
         ChannelHelper.announce(chan_pid, channel_msg)
         {:ok, [Str.format(["dude", "TOPIC", channel, "No topic"])]}
       {:ok, :already_joined, _chan_pid} ->
@@ -159,4 +167,7 @@ defmodule Request do
     "#{NickService.lookup(self())}"
   end
 
+  defp announce(msg) do
+    &ChannelHelper.announce(&1, msg)
+  end
 end
