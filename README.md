@@ -1,15 +1,15 @@
 # Slacker
-## a minimal highly concurrent IRC server
+## minimal concurrent IRC server
 
 ### run (using Docker)
 `docker run hyrfilm/slacker`
 
 you could now connect to it with a irc-client or just with telnet:
-`bash
+```bash
 telnet localhost 6667
 NICK hyrfilm
 JOIN #some-channel
-`
+```
 
 This will start will start the server which will accepts connections on port 6667.
 
