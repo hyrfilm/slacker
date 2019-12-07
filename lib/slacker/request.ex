@@ -8,16 +8,20 @@ defmodule Request do
   @cmd_nick         "NICK"
   @cmd_privmsg      "PRIVMSG"
   @cmd_join         "JOIN"
+  @cmd_part         "PART"
 
   @msg_welcome      "001"
   @msg_motd         "376"
   @no_such_target   "401"
   @msg_nick_taken   "433"
+  @msg_not_on_chan  "442"
 
   def handle_event(type, data) do
     case type do
     :priv_msg
       -> on_priv_msg(data)
+    :announcement
+      -> on_announcement(data)
     _
       -> noop([type, data])
     end
@@ -39,12 +43,15 @@ defmodule Request do
     @cmd_join
       -> join(args)
 
+    @cmd_part
+      -> part(args)
+
     _
       -> noop(data)
     end
   end
 
-  defp quit([_]) do
+  defp quit(_) do
     {:stop}
   end
 
@@ -94,15 +101,38 @@ defmodule Request do
     end
   end
 
+  defp on_announcement([text]) do
+    {:ok, [text]}
+  end
+
   defp join([channel]) do
     # join it
     response = case ChanService.join(channel) do
-      {:ok, :joined, _chan_pid}
-        -> {:ok, [Str.format(["dude", "TOPIC", channel, "No topic"])]}
-      {:ok, :already_joined, _chan_pid}
-        -> {[]}
+      {:ok, :joined, chan_pid} ->
+        channel_msg = Str.format([self_nick(), @cmd_join, channel])
+        ChannelHelper.announce(chan_pid, channel_msg)
+        {:ok, [Str.format(["dude", "TOPIC", channel, "No topic"])]}
+      {:ok, :already_joined, _chan_pid} ->
+        {:ok, []}
     end
     response
+  end
+
+  defp part([channel]) do
+    part([channel, ""])
+  end
+  defp part([channel, msg]) do
+    case ChanService.leave(channel) do
+      {:ok, :left, pid}
+      ->
+        channel_msg = Str.format([self_nick(), @cmd_part, channel, msg])
+        ChannelHelper.announce(pid, channel_msg)
+        {:ok, [channel_msg]}
+      {:ok, :not_joined, _pid}
+      ->
+        response = Str.format([@name, channel, @msg_not_on_chan, "You're not on that channel"])
+        {:ok, [response]}
+    end
   end
 
   defp noop(args) do

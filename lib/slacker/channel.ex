@@ -48,6 +48,12 @@ defmodule Channel do
     {:noreply, state}
   end
 
+  @impl true
+  def handle_cast([:announce, msg], state) do
+    get_members(state) |> broadcast_announcement(msg)
+    {:noreply, state}
+  end
+
   defp is_member?(state, user_pid) do
     MapSet.member?(state[:members], user_pid)
   end
@@ -62,6 +68,14 @@ defmodule Channel do
 
   defp send_priv_msg(src_pid, src_nick, channel_name, msg) do
     &(GenServer.cast(&1, [:priv_msg, src_pid, src_nick, channel_name, msg]))
+  end
+
+  defp broadcast_announcement(pids, msg) do
+    Enum.each(pids, send_announcement(msg))
+  end
+
+  defp send_announcement(msg) do
+    &(GenServer.cast(&1, [:announcement, msg]))
   end
 
   defp put_member(state, user_pid) do

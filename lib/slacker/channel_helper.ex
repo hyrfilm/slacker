@@ -17,8 +17,7 @@ defmodule ChannelHelper do
 
 
   def leave(channel_pid) do
-    {:ok, result, _} = GenServer.call(channel_pid, {:leave})
-    {:ok, result}
+    GenServer.call(channel_pid, {:leave})
   end
 
 
@@ -29,6 +28,10 @@ defmodule ChannelHelper do
 
   def priv_msg(channel_pid, src_nick, dst_nick, msg) do
     GenServer.cast(channel_pid, [:priv_msg, self(), src_nick, dst_nick, msg])
+  end
+
+  def announce(channel_pid, msg) do
+    GenServer.cast(channel_pid, [:announce, msg])
   end
 
 end
