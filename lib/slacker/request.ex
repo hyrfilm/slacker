@@ -136,7 +136,7 @@ defmodule Request do
   end
 
   defp noop(args) do
-    Logger.info("Ignoring: #{args}")
+    Logger.debug("Ignoring: #{args}")
     {:ok, []}
   end
 
