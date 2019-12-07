@@ -1,16 +1,31 @@
-Resource
- create(pid, name)
- destroy(pid)
- find_by_pid(pid)
- find_by_name(name)
- get_or_create(name, start_func)
+# Slacker
+## a minimal highly concurrent IRC server
 
-# login
-Resource.create(self(), nick)
+### run (using Docker)
+`docker run hyrfilm/slacker`
 
-# quit
-Resource.destroy(self())
+you could now connect to it with a irc-client or just with telnet:
+`bash
+telnet localhost 6667
+NICK hyrfilm
+JOIN #some-channel
+`
 
-# join channel
-{:ok, pid} = Resource.get_or_create(name, Chan.start)
-ChanService.join(pid, self())
+This will start will start the server which will accepts connections on port 6667.
+
+### performance
+Should be able to handle a fair amount of connections. All users, sockets & channels are handled concurrently.
+
+### supported clients
+Tested with:
+- Irssi
+- LimeChat
+- Colloquy
+
+
+### supports
+Slacker currently only handles a minimal subset of the IRC protocol:
+- nicknames
+- channels (creating / joining / leaving)
+- messaging (in channels & private messages)
+- note that all traffic is sent in plain-text
