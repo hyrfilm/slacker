@@ -17,7 +17,7 @@ defmodule ChannelTest do
     assert {:ok, [self()]} == ChannelHelper.get_members(channel_pid)
 
     # leave the channel
-    assert {:ok, :left} == ChannelHelper.leave(channel_pid)
+    assert {:ok, :left, channel_pid} == ChannelHelper.leave(channel_pid)
 
     # channel is empty now
     assert {:ok, []} == ChannelHelper.get_members(channel_pid)
@@ -44,7 +44,7 @@ defmodule ChannelTest do
     {:ok, channel_pid} = Channel.start(:my_channel, "#my_channel")
 
     # leave the channel
-    assert {:ok, :not_joined} == ChannelHelper.leave(channel_pid)
+    assert {:ok, :not_joined, channel_pid} == ChannelHelper.leave(channel_pid)
 
     Process.exit(channel_pid, :kill)
   end

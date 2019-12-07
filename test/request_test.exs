@@ -2,10 +2,11 @@ defmodule RequestTest do
   use ExUnit.Case
 
   setup() do
-    {:ok, nick_pid} = Registry.start_link(keys: :unique, name: NickService)
-    {:ok, chan_pid} = Registry.start_link(keys: :unique, name: ChanService)
+    {:ok, pid1} = Registry.start_link(keys: :unique, name: NickService)
+    {:ok, pid2} = Registry.start_link(keys: :unique, name: :AllChannels)
+    {:ok, pid3} = Registry.start_link(keys: :unique, name: :AllClients)
 
-    pids = [nick_pid, chan_pid]
+    pids = [pid1, pid2, pid3]
 
     #TODO: This is a hack, we don't have a guarantee that all processes have been killed before
     #TODO: a new test is run, which can make them sporadically fail. FIX!
@@ -28,6 +29,10 @@ defmodule RequestTest do
     assert [":dude TOPIC #swecan :No topic\r\n"] == responses
 
     assert true == ChannelHelper.is_member?(ChanService.lookup("#swecan"))
+
+    Request.handle_command("JOIN #420")
+
+    assert Enum.sort(["#420", "#swecan"]) == Enum.sort(ChanService.client_channels(self()))
   end
 
   test "request: PRIVMSG" do

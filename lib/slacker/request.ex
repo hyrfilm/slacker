@@ -57,16 +57,23 @@ defmodule Request do
   defp quit([msg]) do
     # send out a quit message to all channels the user is a part of and stop the process
     quit_msg = Str.format([self_nick(), @cmd_quit, msg])
-    channel_names = ChanService.client_channels(self())
-    channel_pids = Enum.map(channel_names, &ChanService.lookup(&1))
-    Enum.each(channel_pids, announce(quit_msg))
+    channel_announce(quit_msg)
     {:stop}
   end
 
   defp nick([nick]) do
+    prv_nick = self_nick()
     case NickService.register(nick) do
       {:ok, _} ->
-        welcome_reply(nick)
+        case ChanService.client_channels(self()) do
+          [] ->
+            # user isn't part of any channels, just send a welcome message
+            welcome_reply(nick)
+          _ ->
+            # user is already logged in, send a nick change announcement
+            channel_announce(Str.format([prv_nick, @cmd_nick, nick, ""]))
+            {:ok, []}
+        end
       {:error, _} ->
         nick_taken_reply(nick)
     end
@@ -165,6 +172,12 @@ defmodule Request do
 
   defp self_nick() do
     "#{NickService.lookup(self())}"
+  end
+
+  defp channel_announce(msg) do
+    channel_names = ChanService.client_channels(self())
+    channel_pids = Enum.map(channel_names, &ChanService.lookup(&1))
+    Enum.each(channel_pids, announce(msg))
   end
 
   defp announce(msg) do
