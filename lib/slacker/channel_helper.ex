@@ -27,8 +27,8 @@ defmodule ChannelHelper do
     {:ok, MapSet.to_list(result)}
   end
 
-  def priv_msg(channel_pid, nick, msg) do
-    {:ok, :sent} = GenServer.call(channel_pid, {:priv_msg, nick, msg})
+  def priv_msg(channel_pid, src_nick, dst_nick, msg) do
+    GenServer.cast(channel_pid, [:priv_msg, self(), src_nick, dst_nick, msg])
   end
 
 end

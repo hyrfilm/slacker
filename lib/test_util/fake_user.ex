@@ -17,6 +17,15 @@ defmodule FakeUser do
     GenServer.call(user_pid, {:priv_messages})
   end
 
+  def wait_for_message(user_pid) do
+    case GenServer.call(user_pid, {:has_message}) do
+      true
+        -> nil
+      false
+        -> wait_for_message(user_pid)
+    end
+  end
+
   @impl true
   def init(_) do
     state = %{:priv_messages => []}
@@ -38,6 +47,12 @@ defmodule FakeUser do
   @impl true
   def handle_call({:priv_messages}, _from, state) do
     {:reply, state[:priv_messages], state}
+  end
+
+  @impl true
+  def handle_call({:has_message}, _from, state) do
+    num_messages = length(state[:priv_messages])
+    {:reply, num_messages > 0, state}
   end
 
   @impl true

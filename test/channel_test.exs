@@ -65,11 +65,15 @@ defmodule ChannelTest do
     FakeUser.join(pid3, channel_pid)
 
     # send a message
-    ChannelHelper.priv_msg(channel_pid, "st0ner93", "dude!")
+    ChannelHelper.priv_msg(channel_pid, "st0ner93", "#my_channel", "dudes!")
+
+    FakeUser.wait_for_message(pid1)
+    FakeUser.wait_for_message(pid2)
+    FakeUser.wait_for_message(pid3)
 
     # verify that it was received
-    assert FakeUser.priv_messages(pid1) == [[self(), "st0ner93", "#my_channel", "dude!"]]
-    assert FakeUser.priv_messages(pid1) == [[self(), "st0ner93", "#my_channel", "dude!"]]
-    assert FakeUser.priv_messages(pid1) == [[self(), "st0ner93", "#my_channel", "dude!"]]
+    assert FakeUser.priv_messages(pid1) == [[self(), "st0ner93", "#my_channel", "dudes!"]]
+    assert FakeUser.priv_messages(pid2) == [[self(), "st0ner93", "#my_channel", "dudes!"]]
+    assert FakeUser.priv_messages(pid3) == [[self(), "st0ner93", "#my_channel", "dudes!"]]
   end
 end
